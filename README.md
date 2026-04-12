@@ -1,4 +1,4 @@
-# 🤖 User-Centric RAG using LlamaIndex Multi-Agent System & Qdrant
+# User-Centric RAG using LlamaIndex Multi-Agent System & Qdrant
 
 ---
 
@@ -45,10 +45,13 @@ This modular, agent-driven design enables users to tailor the system dynamically
 
 ## 🏗️ Architecture
 
-![Architecture](assets/ae.png)
-![Architecture](assets/a2.png)
+![Architecture](assets/architecture.png)
+---
 
-![Architecture](assets/a3.png)
+![Architecture](assets/a2.png)
+---
+
+![Architecture](assets/r3.png)
 
 
 
@@ -74,18 +77,7 @@ Both queries were executed **without modifying the code**, highlighting the syst
 
 ---
 
-## 🖼️ Demo
 
-
----
-
-## 📝 Blog
-
-For a deeper dive into the architecture and implementation:
-
-👉 https://medium.com/@pavannagula76/user-centric-rag-transforming-rag-with-llamaindex-multi-agent-system-and-qdrant-cf3c32cfe6f3
-
----
 
 ## 📚 References
 
