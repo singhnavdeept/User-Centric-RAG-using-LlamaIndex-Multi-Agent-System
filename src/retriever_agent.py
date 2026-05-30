@@ -12,17 +12,21 @@ import pprint
 
 from llama_index.core.memory import ChatMemoryBuffer
 from llama_index.core.tools import FunctionTool
-from llama_index.llms.openai import OpenAI 
-from llama_index.agent.openai import OpenAIAgent
+from llama_index.llms.groq import Groq
+from llama_index.core.agent import ReActAgent
+
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+GROQ_MODEL = os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile")
+llm = Groq(model=GROQ_MODEL, api_key=GROQ_API_KEY)
 from pydantic import BaseModel
 from reranking_agent import ReRankingAgent
 
 
 # Load environment variables
 load_dotenv()
-Qdrant_API_KEY = os.getenv('Qdrant_API_KEY')
-Qdrant_URL = os.getenv('Qdrant_URL')
-Collection_Name = os.getenv('Collection_Name')
+Qdrant_API_KEY = os.getenv('QDRANT_API_KEY') or os.getenv('Qdrant_API_KEY')
+Qdrant_URL = os.getenv('QDRANT_URL') or os.getenv('Qdrant_URL')
+Collection_Name = os.getenv('QDRANT_COLLECTION_NAME') or os.getenv('collection_name') or os.getenv('Collection_Name') or 'my_collection'
 
 #  Search Strategy Interface
 class SearchStrategy:
@@ -153,7 +157,7 @@ class Retriever:
 
 
 # RetrieverAgent function
-def RetrieverAgent(state: dict) -> OpenAIAgent:
+def RetrieverAgent(state: dict) -> ReActAgent:
 
 
     def done() -> None:
@@ -183,9 +187,9 @@ def RetrieverAgent(state: dict) -> OpenAIAgent:
     If the user asks to do anything other than retrieve documents, call the tool "done" to signal that some other agent should help.
     """)
 
-    return OpenAIAgent.from_tools(
+    return ReActAgent.from_tools(
         tools,
-        llm=OpenAI(model="gpt-3.5-turbo"),
+        llm=llm,
         system_prompt=system_prompt,
     )
 if __name__ == '__main__':

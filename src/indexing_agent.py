@@ -11,26 +11,34 @@ import pprint
 
 from llama_index.core.memory import ChatMemoryBuffer
 from llama_index.core.tools import FunctionTool
-from llama_index.llms.openai import OpenAI 
-from llama_index.agent.openai import OpenAIAgent
+from llama_index.llms.groq import Groq
+from llama_index.core.agent import ReActAgent
 from reranking_agent import ReRankingAgent
+import logging
+
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+GROQ_MODEL = os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile")
+llm = Groq(model=GROQ_MODEL, api_key=GROQ_API_KEY)
 
 
 # Load environmental variables from a .env file
 load_dotenv()
 
-Qdrant_API_KEY = os.getenv('Qdrant_API_KEY')
-Qdrant_URL = os.getenv('Qdrant_URL')
-Collection_Name = os.getenv('collection_name')
+Qdrant_API_KEY = os.getenv('QDRANT_API_KEY') or os.getenv('Qdrant_API_KEY')
+Qdrant_URL = os.getenv('QDRANT_URL') or os.getenv('Qdrant_URL')
+Collection_Name = os.getenv('QDRANT_COLLECTION_NAME') or os.getenv('collection_name') or os.getenv('Collection_Name') or 'my_collection'
 qdrant_client = QdrantClient(
                             url=Qdrant_URL,
                             api_key=Qdrant_API_KEY)
         
         
-def load_nodes():
+def load_nodes(input_dir=None):
     metadata = []
     documents = []
-    payload_file = r'..\data\nodes.json'
+    if input_dir:
+        payload_file = os.path.join(input_dir, 'nodes.json')
+    else:
+        payload_file = r'..\data\nodes.json'
 
     try:
         with open(payload_file, 'r') as file:
@@ -43,7 +51,7 @@ def load_nodes():
         print(f"Loaded {len(nodes)} the nodes from JSON file")
 
     except Exception as e:
-        print(f"Error loading nodes from JSON file: {e}")
+        print(f"Error loading nodes from JSON file {payload_file}: {e}")
         raise
 
     return documents, metadata
@@ -139,14 +147,14 @@ class Indexing:
         Index the documents into the Qdrant vector database.
         """
         print("Starting to load the nodes from JSON file")
-        documents, metadata = load_nodes()
+        documents, metadata = load_nodes(self.state.get('input_dir'))
         client_collection()
         print("Creation of the Qdrant Collection is Done")
         insert_documents(self.embedding_model, documents, metadata)
         print("Indexing of the nodes is complete")
 
     
-def QdrantIndexingAgent(state: dict) -> OpenAIAgent:  
+def QdrantIndexingAgent(state: dict) -> ReActAgent:  
 
     def has_embedding_model(embedding_model: str) -> bool:
         """Useful for checking if the user has specified an embedding model."""
@@ -181,9 +189,9 @@ def QdrantIndexingAgent(state: dict) -> OpenAIAgent:
     If the user requests a task other than indexing the nodes, call the tool "done" to indicate that another agent should assist.
     """)
 
-    return OpenAIAgent.from_tools(
+    return ReActAgent.from_tools(
         tools,
-        llm=OpenAI(model="gpt-3.5-turbo"),
+        llm=llm,
         system_prompt=system_prompt,
     )
 

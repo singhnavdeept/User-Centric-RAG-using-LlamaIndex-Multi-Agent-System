@@ -6,8 +6,8 @@ from colorama import Fore, Style
 
 from llama_index.core.memory import ChatMemoryBuffer
 from llama_index.core.tools import FunctionTool
-from llama_index.llms.openai import OpenAI 
-from llama_index.agent.openai import OpenAIAgent
+from llama_index.llms.groq import Groq
+from llama_index.core.agent import ReActAgent
 from document_pre_processing_agent import DocumentPreprocessingAgent
 from indexing_agent import QdrantIndexingAgent
 from generation_agent import GenerationAgent
@@ -23,6 +23,31 @@ if "messages" not in st.session_state:
 # Initialize state
 if "state" not in st.session_state:
     st.session_state.state = get_initial_state()
+
+import tempfile
+import os
+
+with st.sidebar:
+    st.header("Document Upload & Configuration")
+    uploaded_files = st.file_uploader(
+        "Upload PDF/TXT documents to pre-process & index",
+        type=["pdf", "txt", "docx", "json"],
+        accept_multiple_files=True
+    )
+    if uploaded_files:
+        if "temp_dir" not in st.session_state:
+            st.session_state.temp_dir = tempfile.mkdtemp()
+        
+        for uploaded_file in uploaded_files:
+            file_path = os.path.join(st.session_state.temp_dir, uploaded_file.name)
+            with open(file_path, "wb") as f:
+                f.write(uploaded_file.getbuffer())
+        
+        st.session_state.state["input_dir"] = st.session_state.temp_dir
+        st.success(f"Saved {len(uploaded_files)} files for agent access!")
+
+    st.subheader("Current Agent State Variables")
+    st.json(st.session_state.state)
 
 # Initialize root memory
 if "root_memory" not in st.session_state:

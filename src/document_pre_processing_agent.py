@@ -5,8 +5,12 @@ import pprint
 
 from llama_index.core.memory import ChatMemoryBuffer
 from llama_index.core.tools import FunctionTool
-from llama_index.llms.openai import OpenAI 
-from llama_index.agent.openai import OpenAIAgent
+from llama_index.llms.groq import Groq
+from llama_index.core.agent import ReActAgent
+
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+GROQ_MODEL = os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile")
+llm = Groq(model=GROQ_MODEL, api_key=GROQ_API_KEY)
 
 import os
 import json
@@ -71,7 +75,7 @@ class preprocess_docs:
         save_nodes(nodes, input_dir)
         print("saved the nodes")
 
-def DocumentPreprocessingAgent(state: dict) -> OpenAIAgent:
+def DocumentPreprocessingAgent(state: dict) -> ReActAgent:
 
     def has_input_dir(input_dir) -> bool:
         """Useful for checking if the user has specified an input file directory."""
@@ -124,9 +128,9 @@ def DocumentPreprocessingAgent(state: dict) -> OpenAIAgent:
     If the user requests any action other than document preprocessing, call the tool "done" to indicate that another agent should take over.
     """)
 
-    return OpenAIAgent.from_tools(
+    return ReActAgent.from_tools(
         tools,
-        llm=OpenAI(model="gpt-3.5-turbo"),
+        llm=llm,
         system_prompt=system_prompt,
     )
 

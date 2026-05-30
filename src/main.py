@@ -6,13 +6,18 @@ from typing import List
 import pprint
 from colorama import Fore, Back, Style
 
+import os
 from llama_index.core.memory import ChatMemoryBuffer
 from llama_index.core.tools import FunctionTool
-from llama_index.llms.openai import OpenAI 
-from llama_index.agent.openai import OpenAIAgent
+from llama_index.llms.groq import Groq
+from llama_index.core.agent import ReActAgent
 from document_pre_processing_agent import DocumentPreprocessingAgent
 from indexing_agent import QdrantIndexingAgent
 from generation_agent import GenerationAgent
+
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+GROQ_MODEL = os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile")
+llm = Groq(model=GROQ_MODEL, api_key=GROQ_API_KEY)
 
 
 class Speaker(str, Enum):
@@ -25,7 +30,7 @@ class Speaker(str, Enum):
     ORCHESTRATOR = "orchestrator"
 
 
-def concierge_agent_factory(state: dict) -> OpenAIAgent:
+def concierge_agent_factory(state: dict) -> ReActAgent:
     def dummy_tool() -> bool:
         """A tool that does nothing."""
         print("Doing nothing.")
@@ -46,13 +51,13 @@ def concierge_agent_factory(state: dict) -> OpenAIAgent:
         {pprint.pformat(state, indent=4)}
     """)
 
-    return OpenAIAgent.from_tools(
+    return ReActAgent.from_tools(
         tools,
-        llm=OpenAI(model="gpt-3.5-turbo"),
+        llm=llm,
         system_prompt=system_prompt,
     )
 
-def continuation_agent_factory(state: dict) -> OpenAIAgent:
+def continuation_agent_factory(state: dict) -> ReActAgent:
     def dummy_tool() -> bool:
         """A tool that does nothing."""
         print("Doing nothing.")
@@ -66,13 +71,13 @@ def continuation_agent_factory(state: dict) -> OpenAIAgent:
         {pprint.pformat(state, indent=4)}
     """)
 
-    return OpenAIAgent.from_tools(
+    return ReActAgent.from_tools(
         tools,
-        llm=OpenAI(model="gpt-3.5-turbo", temperature=0.4),
+        llm=llm,
         system_prompt=system_prompt,
     )
 
-def orchestration_agent_factory(state: dict) -> OpenAIAgent:
+def orchestration_agent_factory(state: dict) -> ReActAgent:
     
     def has_embedding_model(embedding_model: str) -> bool:
         """Useful for checking if the user has specified an embedding model."""
@@ -127,9 +132,9 @@ def orchestration_agent_factory(state: dict) -> OpenAIAgent:
         NEVER respond with anything other than one of the above strings. DO NOT be helpful or conversational.
         """)
 
-    return OpenAIAgent.from_tools(
+    return ReActAgent.from_tools(
         tools,
-        llm=OpenAI(model="gpt-3.5-turbo", temperature=0.4),
+        llm=llm,
         system_prompt=system_prompt,
     )
 

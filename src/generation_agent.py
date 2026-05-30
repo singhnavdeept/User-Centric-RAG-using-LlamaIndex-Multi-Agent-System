@@ -3,8 +3,12 @@ from llama_index.core import PromptTemplate
 from llama_index.core import Settings
 from llama_index.core.query_engine import CustomQueryEngine
 from retriever_agent import Retriever
-from llama_index.llms.openai import OpenAI
-from llama_index.agent.openai import OpenAIAgent
+from llama_index.llms.groq import Groq
+from llama_index.core.agent import ReActAgent
+
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+GROQ_MODEL = os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile")
+llm = Groq(model=GROQ_MODEL, api_key=GROQ_API_KEY)
 from dotenv import load_dotenv
 from llama_index.core.response_synthesizers import BaseSynthesizer
 from llama_index.core.tools import FunctionTool
@@ -73,9 +77,6 @@ def create_query_engine(prompt: str):
     """
     Create a query engine for generating responses based on the given prompt.
     """
-    llm = OpenAI(model="gpt-3.5-turbo")
-    #response_synthesizer = TreeSummarize(llm=llm)
-
     query_engine = RAGStringQueryEngine(
         llm=llm,
         #response_synthesizer=response_synthesizer,
@@ -95,7 +96,7 @@ def generation(state):
     return response
 
 
-def GenerationAgent(state: dict) -> OpenAIAgent:
+def GenerationAgent(state: dict) -> ReActAgent:
     """
     Define the GenerationAgent for generating explanations based on the user's query, search type, and reranking model.
     """
@@ -153,9 +154,9 @@ def GenerationAgent(state: dict) -> OpenAIAgent:
         """
 
 
-    return OpenAIAgent.from_tools(
+    return ReActAgent.from_tools(
         tools = tools,
-        llm=OpenAI(model="gpt-3.5-turbo"),
+        llm=llm,
         system_prompt=system_prompt,
     )
 

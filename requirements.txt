@@ -1,4 +1,4 @@
-# Default
+
 python-dotenv
 sentence_transformers
 streamlit
@@ -6,5 +6,5 @@ llama-index
 qdrant_client
 llama-index-embeddings-huggingface
 fastembed
+llama-index-llms-groq
 
--e
