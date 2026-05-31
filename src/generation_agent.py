@@ -4,10 +4,11 @@ from llama_index.core import Settings
 from llama_index.core.query_engine import CustomQueryEngine
 from retriever_agent import Retriever
 from llama_index.llms.groq import Groq
-from llama_index.core.agent import ReActAgent
+from agent_compat import ReActAgent
 
+import os
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
-GROQ_MODEL = os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile")
+GROQ_MODEL = os.getenv("GROQ_MODEL", "llama-3.1-8b-instant")
 llm = Groq(model=GROQ_MODEL, api_key=GROQ_API_KEY)
 from dotenv import load_dotenv
 from llama_index.core.response_synthesizers import BaseSynthesizer
@@ -61,7 +62,7 @@ def prompt_generation(state):
     return prompt_templ
 
 class RAGStringQueryEngine(CustomQueryEngine):
-    llm: OpenAI
+    llm: Groq
     #response_synthesizer: BaseSynthesizer
 
     def custom_query(self, prompt: str) -> str:

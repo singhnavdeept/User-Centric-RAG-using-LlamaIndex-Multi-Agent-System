@@ -10,13 +10,13 @@ import os
 from llama_index.core.memory import ChatMemoryBuffer
 from llama_index.core.tools import FunctionTool
 from llama_index.llms.groq import Groq
-from llama_index.core.agent import ReActAgent
+from agent_compat import ReActAgent
 from document_pre_processing_agent import DocumentPreprocessingAgent
 from indexing_agent import QdrantIndexingAgent
 from generation_agent import GenerationAgent
 
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
-GROQ_MODEL = os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile")
+GROQ_MODEL = os.getenv("GROQ_MODEL", "llama-3.1-8b-instant")
 llm = Groq(model=GROQ_MODEL, api_key=GROQ_API_KEY)
 
 

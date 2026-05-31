@@ -4,10 +4,11 @@ from main import concierge_agent_factory
 from main import continuation_agent_factory
 from colorama import Fore, Style
 
+import os
 from llama_index.core.memory import ChatMemoryBuffer
 from llama_index.core.tools import FunctionTool
 from llama_index.llms.groq import Groq
-from llama_index.core.agent import ReActAgent
+from agent_compat import ReActAgent
 from document_pre_processing_agent import DocumentPreprocessingAgent
 from indexing_agent import QdrantIndexingAgent
 from generation_agent import GenerationAgent

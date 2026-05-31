@@ -1,5 +1,6 @@
 from sentence_transformers import CrossEncoder
 
+import os
 # Define the reranker models
 class SentenceTransformerRerank:
     def __init__(self, model, top_n):
