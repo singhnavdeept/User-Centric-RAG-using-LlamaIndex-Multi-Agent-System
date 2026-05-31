@@ -1,95 +1,110 @@
 # User-Centric RAG using LlamaIndex Multi-Agent System & Qdrant
 
----
-
-## 📖 Overview
-
-Have you ever used a RAG application and thought:
-
-* *“What if I could switch from semantic to hybrid search for this query?”*
-* *“Maybe a different reranking or embedding model would give better results.”*
-
-Typically, making such changes requires modifying the codebase. But what if you could simply **ask an agent to handle everything within the chat interface?**
-
-This project introduces **User-Centric RAG** — a multi-agent system built using the **LlamaIndex Multi-Agent Concierge architecture**, enabling dynamic control over the entire RAG pipeline.
+This repository contains a **Conversational Multi-Agent RAG System** built using **LlamaIndex**, **Qdrant Vector Database**, and **Groq Cloud API**. Unlike static RAG pipelines where configurations are hardcoded, this system allows users to dynamically configure chunking, embeddings, retrieval strategies, and reranking parameters entirely via a Streamlit chat interface.
 
 ---
 
-## 🚀 Key Idea
+## 🏗️ System Architecture
 
-Instead of hardcoding pipeline decisions, this system allows users to:
+Each step of the RAG pipeline is managed by specialized, autonomous agents that communicate and transition states under the direction of an Orchestrator:
 
-* Select **chunking strategies**
-* Choose **embedding models**
-* Switch between **semantic and hybrid search**
-* Apply different **reranking models**
+```mermaid
+graph TD
+    User([User Chat Input]) --> Orchestrator{Orchestrator Agent}
+    
+    Orchestrator -->|Needs Config/Help| Concierge[Concierge Agent]
+    Orchestrator -->|Pre-process Docs| Preprocess[Document Preprocessing Agent]
+    Orchestrator -->|Index to Vector DB| Indexer[Qdrant Indexing Agent]
+    Orchestrator -->|Perform Search/Generation| Generation[Generation/Retrieval Agent]
+    
+    Preprocess -->|Save Chunks| JSON[(nodes.json)]
+    Indexer -->|Dense + Sparse Vectors| Qdrant[(Qdrant Cloud)]
+    Generation -->|Fetch Chunks| Qdrant
+    Generation -->|Rerank Chunks| Reranker[Reranking Agent]
+    Reranker -->|LLM Synthesis| Groq[Groq Llama 3.1]
+    Groq -->|Final Response| User
+```
 
-👉 All through a **simple conversational interface**
-
----
-
-## 🧠 Project Summary
-
-This project demonstrates how a **LlamaIndex Multi-Agent System** transforms a traditional RAG pipeline into a **fully user-controllable system**.
-
-Each stage of the pipeline is handled by specialized agents:
-
-* 📄 **Document Processing Agent** → Handles chunking & preprocessing
-* 🧱 **Indexing Agent** → Builds vector indexes
-* 🔍 **Retrieval Agent** → Executes semantic or hybrid search
-* ✨ **Generation Agent** → Produces final responses
-
-This modular, agent-driven design enables users to tailor the system dynamically based on their needs.
-
----
-
-## 🏗️ Architecture
-
-![Architecture](assets/architecture.png)
----
-
-![Architecture](assets/a2.png)
----
-
-![Architecture](assets/r3.png)
-
-
+### Specialized Agents:
+1. **Orchestrator Agent:** Watches the conversation history and updates state variables, delegating to the appropriate active agent.
+2. **Concierge Agent:** Handles default user communication, clarifying options, and collecting missing configurations.
+3. **Document Preprocessing Agent:** Performs text sanitization, sentence splitting, and chunk formatting.
+4. **Qdrant Indexing Agent:** Generates dense and sparse embeddings (SPLADE/BM42 attentions) and registers them to Qdrant.
+5. **Retrieval & Generation Agent:** Combines retrieval strategies, cross-encoder rerankers, and LLM text generation to answer user queries.
 
 ---
 
-## 📊 Results & Observations
+## 🛠️ Getting Started & Local Setup
 
-The system demonstrates strong flexibility by allowing real-time experimentation with different configurations:
+### 1. Prerequisites
+Ensure you have **Python 3.10+** installed. Clone the repository and install the project requirements:
+```bash
+pip install -r requirements.txt
+```
 
-### 🔹 Experiment 1
+### 2. Configure Environment Secrets
+Create a `.env` file at the root of the project (template available in `.env`) and add your API credentials:
+```ini
+# Groq LLM Configuration
+GROQ_API_KEY=your_groq_api_key
+GROQ_MODEL=llama-3.1-8b-instant
 
-* **Search Type:** Semantic Search
-* **Reranker:** BGE Model
-* ✅ Optimized for semantic relevance
+# Qdrant Database Configuration
+QDRANT_URL=your_qdrant_cluster_url
+QDRANT_API_KEY=your_qdrant_api_key
+QDRANT_COLLECTION_NAME=rag_collection
+```
 
-### 🔹 Experiment 2
-
-* **Search Type:** Hybrid Search
-* **Reranker:** Cross-Encoder
-* ✅ Balanced semantic + keyword matching
-
-Both queries were executed **without modifying the code**, highlighting the system’s adaptability and user-centric design.
+### 3. Run the App
+Launch the Streamlit web interface locally:
+```bash
+streamlit run src/app.py
+```
 
 ---
 
+## 🎛️ How to Tune Your RAG Pipeline via Conversation
 
+The system holds a session state mapping your configurations. You can adjust and tune parameters conversationally at each pipeline stage:
 
-## 📚 References
-
-* https://qdrant.tech/documentation/
-* https://docs.llamaindex.ai/en/stable/
-* https://www.llamaindex.ai/blog/building-a-multi-agent-concierge-system
+| Stage | Configurable Parameters | How to Ask the Agent |
+| :--- | :--- | :--- |
+| **1. Chunking** | `chunk_size` (e.g. 300, 500, 800)<br>`chunk_overlap` (e.g. 50, 100) | *"Preprocess with a chunk size of 500 and chunk overlap of 50"* |
+| **2. Embeddings** | `embedding_model`<br>Options: `sentence-transformer`, `snowflake`, `BAAI` | *"Index using the BAAI embedding model"* |
+| **3. Retrieval** | `search_type`<br>Options: `semantic` (dense only) or `hybrid` (RRF dense + sparse) | *"Query using hybrid search"* |
+| **4. Reranking** | `reranking_model`<br>Options: `cross-encoder` or `BGE` | *"Use the cross-encoder reranker"* |
 
 ---
 
-## 🔮 Future Enhancements
+## 💬 Step-by-Step Interactive RAG Guide
 
-* Add automated evaluation metrics (RAGAS, etc.)
-* Integrate more embedding & reranking models
-* Deploy as a scalable API service
-* Add UI dashboard for configuration visualization
+Follow this walkthrough to index and query your uploaded document:
+
+### Step 1: Upload Documents
+In the Streamlit left sidebar, upload your documents (`PDF`, `TXT`, `DOCX`, or `JSON` formats). This writes them dynamically to a sandbox folder and configures your session's `input_dir`.
+
+### Step 2: Split and Preprocess
+Instruct the agent to split the document into chunk nodes:
+> **User:** *"Preprocess the uploaded files with a chunk size of 400 and overlap of 40"*
+> 
+> *The Document Preprocessing Agent will activate, split the documents, and save the schema to the sandbox.*
+
+### Step 3: Index Chunks to Qdrant Cloud
+Push the nodes with dense & sparse vector configurations to your database:
+> **User:** *"Index the nodes using the sentence-transformer embedding model"*
+> 
+> *The Indexing Agent will create the collection in Qdrant (with dual dense/sparse indexing structures) and upsert the vectors.*
+
+### Step 4: Hybrid RAG Query & Synthesis
+Query the knowledge base using advanced search & reranker settings:
+> **User:** *"Query the document to extract the candidate's main technical experiences using hybrid search type and BGE reranker"*
+> 
+> *The Orchestrator routes the request to the Generation agent. The agent fetches the top chunks from Qdrant, merges the dense and sparse scores, filters through the BGE reranker, and outputs the result using Groq.*
+
+---
+
+## 📚 Technical Abstractions Used
+* **LlamaIndex Workflows:** Underpins the agent communication loop, routing context, and session memory management.
+* **FastEmbed:** Generates dense vector representations and SPLADE sparse representations on the fly.
+* **Qdrant Client:** Executes fast vector search with Reciprocal Rerank Fusion (RRF) for hybrid retrieval.
+* **Sentence-Transformers:** Reranks candidate nodes using Cross-Encoder models to maximize precision.
